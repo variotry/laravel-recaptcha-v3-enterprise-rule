@@ -5,7 +5,7 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Variotry\\Recaptcha\\V3\\Enterprise": "src/"
+      "Variotry\\Recaptcha\\V3\\Enterprise\\": "src/"
     }
   },
   "extra": {
