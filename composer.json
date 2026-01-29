@@ -1,6 +1,6 @@
 {
   "name": "variotry/laravel-recaptcha-v3-enterprise-rule",
-  "description": "",
+  "description": "Laravel validation rule for reCAPTCHA v3 Enterprise",
   "type": "library",
   "license": "MIT",
   "autoload": {
