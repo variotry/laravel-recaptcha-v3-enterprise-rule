@@ -11,9 +11,6 @@ use Google\Cloud\RecaptchaEnterprise\V1\Assessment;
 use Google\Cloud\RecaptchaEnterprise\V1\TokenProperties\InvalidReason;
 use Google\Cloud\RecaptchaEnterprise\V1\CreateAssessmentRequest;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Lang;
-
 class RecaptchaV3Enterprise implements ValidationRule
 {
     protected ?string $siteKey;
@@ -45,14 +42,14 @@ class RecaptchaV3Enterprise implements ValidationRule
         if ( empty( $this->siteKey ) )
         {
             $code = 'RC-5011';
-            Log::channel( $this->loggingChannel )->error( $this->getLangLoggingMessage( $code ) );
+            \Log::channel( $this->loggingChannel )->error( $this->getLangLoggingMessage( $code ) );
             $fail( $this->getLangValidationMessage( $code ) );
             return;
         }
         if ( empty( $this->service_account_base64 ) )
         {
             $code = 'RC-5012';
-            Log::channel( $this->loggingChannel )->error( $this->getLangLoggingMessage( $code ) );
+            \Log::channel( $this->loggingChannel )->error( $this->getLangLoggingMessage( $code ) );
             $fail( $this->getLangValidationMessage( $code ) );
             return;
         }
@@ -89,7 +86,7 @@ class RecaptchaV3Enterprise implements ValidationRule
                 $code = 'RC-4001';
                 $msg = $this->getLangLoggingMessage( $code ) . '：';
                 $msg .= InvalidReason::name( $response->getTokenProperties()->getInvalidReason() );
-                Log::channel(  $this->loggingChannel )->warning( $msg );
+                \Log::channel(  $this->loggingChannel )->warning( $msg );
                 $fail( $this->getLangValidationMessage( $code ) );
                 return;
             }
@@ -97,7 +94,7 @@ class RecaptchaV3Enterprise implements ValidationRule
             if ( $response->getTokenProperties()->getAction() != $this->action )
             {
                 $code = 'RC-4002';
-                Log::channel(  $this->loggingChannel )->warning( $this->getLangLoggingMessage( $code ) );
+                \Log::channel(  $this->loggingChannel )->warning( $this->getLangLoggingMessage( $code ) );
                 $fail( $this->getLangValidationMessage( $code ) );
                 return;
             }
@@ -109,7 +106,7 @@ class RecaptchaV3Enterprise implements ValidationRule
             $logging = config( 'recaptcha-V3-enterprise.score_logging' );
             if ( $logging === 'always' || ( $logging === 'on_fail' && !$passed ) )
             {
-                Log::channel(  $this->loggingChannel )->log( $passed ? 'info' : 'warning', __( 'variotry::recaptcha_rule.logging.score' ) . "：" . implode( ',', [ $this->action, $score ] ) );
+                \Log::channel(  $this->loggingChannel )->log( $passed ? 'info' : 'warning', __( 'variotry::recaptcha_rule.logging.score' ) . "：" . implode( ',', [ $this->action, $score ] ) );
             }
 
             // リスクスコアと理由を取得する。
@@ -124,14 +121,14 @@ class RecaptchaV3Enterprise implements ValidationRule
         catch ( \Google\ApiCore\ApiException $e )
         {
             $code = 'RC-5001';
-            Log::channel(  $this->loggingChannel )->error( "($code)" . $e->getMessage() );
+            \Log::channel(  $this->loggingChannel )->error( "($code)" . $e->getMessage() );
             // ユーザーへのエラーにおいて、「recaptcha・site key・tokenといったワードは出さないほうが良いみたい」
             $fail( $this->getLangValidationMessage( $code ) );
         }
         catch ( \Exception $e )
         {
             $code = 'RC-5002';
-            Log::channel(  $this->loggingChannel )->error( "($code)" . $e->getMessage() );
+            \Log::channel(  $this->loggingChannel )->error( "($code)" . $e->getMessage() );
             $fail( $this->getLangValidationMessage( $code ) );
         }
         finally
@@ -143,7 +140,7 @@ class RecaptchaV3Enterprise implements ValidationRule
     public function getLangValidationMessage( string $key ): string
     {
         $langKey = 'variotry::recaptcha_rule.' . $key;
-        if ( Lang::has( $langKey ) )
+        if ( \Lang::has( $langKey ) )
         {
             $msg = __( $langKey );
         }
