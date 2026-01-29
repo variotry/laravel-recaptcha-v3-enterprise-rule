@@ -139,10 +139,15 @@ class RecaptchaV3Enterprise implements ValidationRule
 
     public function getLangValidationMessage( string $key ): string
     {
-        $langKey = 'variotry::recaptcha_rule.' . $key;
-        if ( \Lang::has( $langKey ) )
+        // namespace付きのキーで \Lang::has() を読んだ際に
+        // false結果（キーが存在しない）となった場合、バリデーションで
+        // $fail('message') を実行しても、 422が返らず
+        // なぜかリダイレクトが発生するので、 \Lang::has を使わない方法にしている
+
+        $langArr = \Lang::get( 'variotry::recaptcha_rule' );
+        if ( array_key_exists( $key, $langArr ) )
         {
-            $msg = __( $langKey );
+            $msg = $langArr[ $key ];
         }
         else
         {
