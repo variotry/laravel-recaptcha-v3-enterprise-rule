@@ -21,9 +21,9 @@ class RecaptchaV3Enterprise implements ValidationRule
     /**
      * 引数 Ruleの $fail Closerを渡す。戻り値は false or float。
      * false を返すとアセスメントを実行しない。floatを返すときは、reCAPTCHAの評価基準。
-     * @var \Closure|null
+     * @var callable|null
      */
-    protected ?Closure $scoreResolver;
+    protected $scoreResolver;
 
     protected ?string $siteKey;
     protected ?string $service_account_base64;
@@ -35,7 +35,7 @@ class RecaptchaV3Enterprise implements ValidationRule
      * @param Closure|null $scoreResolver 引数 Ruleの $fail Closerを渡す。戻り値は false or float。
      * false を返すとアセスメントを実行しない。floatを返すときは、reCAPTCHAの評価基準。
      */
-    public function __construct( string $action, ?Closure $scoreResolver = null )
+    public function __construct( string $action, ?callable $scoreResolver = null )
     {
         $this->action = $action;
         $this->scoreResolver = $scoreResolver;
