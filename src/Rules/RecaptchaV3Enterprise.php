@@ -11,18 +11,41 @@ use Google\Cloud\RecaptchaEnterprise\V1\Assessment;
 use Google\Cloud\RecaptchaEnterprise\V1\TokenProperties\InvalidReason;
 use Google\Cloud\RecaptchaEnterprise\V1\CreateAssessmentRequest;
 
+/**
+ * @property Closure(int, int): string one
+ */
 class RecaptchaV3Enterprise implements ValidationRule
 {
+    protected string $action;
+
+    /**
+     * 引数 Ruleの $fail Closerを渡す。戻り値は false or float。
+     * false を返すとアセスメントを実行しない。floatを返すときは、reCAPTCHAの評価基準。
+     * @var \Closure|null
+     */
+    protected ?Closure $scoreResolver;
+
     protected ?string $siteKey;
     protected ?string $service_account_base64;
 
     protected readonly string $loggingChannel;
 
-    public function __construct( public string $action, public ?float $minScore = null )
+    /**
+     * @param string $action reCAPTCHAのアクションを指定
+     * @param Closure|null $scoreResolver 引数 Ruleの $fail Closerを渡す。戻り値は false or float。
+     * false を返すとアセスメントを実行しない。floatを返すときは、reCAPTCHAの評価基準。
+     */
+    public function __construct( string $action, ?Closure $scoreResolver = null )
     {
-        if ( empty( $this->minScore ) )
+        $this->action = $action;
+        $this->scoreResolver = $scoreResolver;
+
+        if ( empty( $this->scoreResolver ) )
         {
-            $this->minScore = config( 'recaptcha-V3-enterprise.min_score' );
+            // 未設定の場合は、configのスコア値をそのまま利用
+            $this->scoreResolver = function( Closure $fail ) {
+                return config( 'recaptcha-V3-enterprise.min_score' );
+            };
         }
         $this->siteKey = config( 'recaptcha-V3-enterprise.site_key' );
         $this->service_account_base64 = config( 'recaptcha-V3-enterprise.service_account_base64' );
@@ -36,6 +59,15 @@ class RecaptchaV3Enterprise implements ValidationRule
      */
     public function validate( string $attribute, mixed $value, Closure $fail ): void
     {
+        $judgeScore = ($this->scoreResolver)( $fail );
+        if ( $judgeScore === false )
+        {
+            // reCAPTCHAのアセスメント実行を抑えられるように
+            // 評価が不必要な場合はfalseを返すことを期待
+            return;
+        }
+
+
         // わかりやすくするため $token変数に単純コピー
         $token = $value;
 
@@ -101,7 +133,7 @@ class RecaptchaV3Enterprise implements ValidationRule
 
             //  0.7の場合、0.69999998807907 のような値になるので 四捨五入
             $score = round( $response->getRiskAnalysis()->getScore(), 1 );
-            $passed = $score >= $this->minScore;
+            $passed = $score >= $judgeScore;
 
             $logging = config( 'recaptcha-V3-enterprise.score_logging' );
             if ( $logging === 'always' || ( $logging === 'on_fail' && !$passed ) )
